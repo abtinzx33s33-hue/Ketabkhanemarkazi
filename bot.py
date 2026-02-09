@@ -1,11 +1,16 @@
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import (
     ApplicationBuilder, CommandHandler, CallbackQueryHandler,
-    MessageHandler, ContextTypes, filters
+    MessageHandler, ContextTypes, filters as tg_filters
 )
 import json, os
 
 # ================= تنظیمات =================
+# BOT_TOKEN و OWNER_USERNAME از متغیر محیطی می‌آیند
+BOT_TOKEN = os.environ.get("BOT_TOKEN")            # مقدار از Environment Variable
+OWNER_USERNAME = os.environ.get("OWNER_USERNAME")  # بدون @
+
+# فایل‌های ذخیره‌سازی
 ADMINS_FILE = "admins.json"
 FILMS_FILE = "films.json"
 
@@ -15,7 +20,10 @@ def load(file, default):
         with open(file, "w", encoding="utf-8") as f:
             json.dump(default, f, ensure_ascii=False, indent=2)
     with open(file, "r", encoding="utf-8") as f:
-        return json.load(f)
+        try:
+            return json.load(f)
+        except json.JSONDecodeError:
+            return default
 
 def save(file, data):
     with open(file, "w", encoding="utf-8") as f:
@@ -71,8 +79,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     await update.message.reply_text(
-        "❌ شما دسترسی ندارید\n"
-        "برای دریافت دسترسی با مالک ربات تماس بگیرید"
+        "❌ شما دسترسی ندارید\nبرای دریافت دسترسی با مالک ربات تماس بگیرید"
     )
 
 # ================= ثبت فیلم =================
@@ -107,7 +114,7 @@ async def film_steps(update: Update, context: ContextTypes.DEFAULT_TYPE):
         context.user_data.clear()
         await update.message.reply_text("✅ فیلم با موفقیت ثبت شد")
 
-# ================= جستجو (فقط مقام‌دار) =================
+# ================= جستجو =================
 async def search(update: Update, context: ContextTypes.DEFAULT_TYPE):
     username = update.effective_user.username
     if not has_privilege(username):
@@ -219,9 +226,9 @@ async def back(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # ================= اجرا =================
 app = ApplicationBuilder().token(BOT_TOKEN).build()
 
+# هَندلرها
 app.add_handler(CommandHandler("start", start))
 app.add_handler(CommandHandler("search", search))
-
 app.add_handler(CallbackQueryHandler(add_film, pattern="add_film"))
 app.add_handler(CallbackQueryHandler(admin_panel, pattern="admin_panel"))
 app.add_handler(CallbackQueryHandler(owner_panel, pattern="owner_panel"))
@@ -229,8 +236,6 @@ app.add_handler(CallbackQueryHandler(add_admin, pattern="add_admin"))
 app.add_handler(CallbackQueryHandler(add_owner, pattern="add_owner"))
 app.add_handler(CallbackQueryHandler(del_owner, pattern="del_owner"))
 app.add_handler(CallbackQueryHandler(back, pattern="back"))
-
-from telegram.ext import filters as tg_filters
 
 app.add_handler(MessageHandler(tg_filters.TEXT & tg_filters.ChatType.PRIVATE, film_steps))
 app.add_handler(MessageHandler(tg_filters.TEXT & tg_filters.ChatType.PRIVATE, receive_admin))
