@@ -6,9 +6,14 @@ from telegram.ext import (
 import json, os
 
 # ================= تنظیمات =================
-# BOT_TOKEN و OWNER_USERNAME از متغیر محیطی می‌آیند
 BOT_TOKEN = os.environ.get("BOT_TOKEN")            # مقدار از Environment Variable
 OWNER_USERNAME = os.environ.get("OWNER_USERNAME")  # بدون @
+
+# چک کردن متغیرها قبل از شروع
+if not BOT_TOKEN:
+    raise ValueError("❌ BOT_TOKEN متغیر محیطی ندارد! حتماً آن را اضافه کنید")
+if not OWNER_USERNAME:
+    raise ValueError("❌ OWNER_USERNAME متغیر محیطی ندارد! حتماً آن را اضافه کنید")
 
 # فایل‌های ذخیره‌سازی
 ADMINS_FILE = "admins.json"
